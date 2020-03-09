@@ -49,20 +49,32 @@ module VimeoMe2
 
         # start the upload
         def start_upload
-          headers = {'Content-Type' => 'application/offset+octet-stream'}
-          headers['Tus-Resumable'] = '1.0.0'
-          headers['Upload-Offset'] = '0'
-          @video.rewind
-          video_content = @video.read(@video.size).to_s
+          headers = {
+            'Content-Type' => 'application/offset+octet-stream',
+            'Tus-Resumable' => '1.0.0'
+          }
+
+          video_size = @video.size
+          video_chunk_size = if video_size < mb_to_b(1024)
+                               mb_to_b(128)
+                             else
+                               mb_to_b(256)
+                             end
+          
+          upload_link = @ticket['upload']['upload_link']
+          upload_offset = 0
+
           begin
-            body = video_content[headers['Upload-Offset'].to_i..-1]
-            patch @ticket['upload']['upload_link'], body: body, headers: headers, code:204
-            headers['Upload-Offset'] = @client.last_request.headers['upload-offset']
-          end while upload_incomplete
+            headers['Upload-Offset'] = upload_offset.to_s
+            @video.seek upload_offset
+            video_chunk = @video.read video_chunk_size
+            patch upload_link, body: video_chunk, headers: headers, code: 204
+            upload_offset = @client.last_request.headers['upload-offset'].to_i
+          end while upload_offset < video_size
         end
 
-        def upload_incomplete
-          @client.last_request.headers['upload-offset'].to_i != @video.size
+        def mb_to_b(mb)
+          mb * 1024 * 2014
         end
     end
   end
