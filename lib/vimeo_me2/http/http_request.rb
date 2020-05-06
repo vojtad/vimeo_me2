@@ -109,8 +109,13 @@ module VimeoMe2
             if call.response.body.nil? || call.response.body.empty?
               raise RequestFailed.new(call.code, call.msg)
             else
-              body = JSON.parse(call.response.body)
-              raise RequestFailed.new(call.code, call.msg, body['error'], @ratelimit)
+              begin
+                body = JSON.parse(call.response.body)
+                raise RequestFailed.new(call.code, call.msg, body['error'], @ratelimit)
+              rescue JSON::ParserError
+                log "response body is not valid JSON"
+                raise RequestFailed.new(call.code, call.msg, call.response.body, @ratelimit)
+              end
             end
           end
         end
