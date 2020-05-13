@@ -31,8 +31,8 @@ module VimeoMe2
 
       # Get video's of folder
       # @param [String] folder_id The Id of the folder.
-      def get_folder_videos folder_id
-        get("/projects/#{folder_id}/videos")
+      def get_folder_videos folder_id, **args
+        get("/projects/#{folder_id}/videos", args)
       end      
 
       # Add single video to an folder
