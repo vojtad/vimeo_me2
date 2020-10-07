@@ -5,9 +5,9 @@ module VimeoMe2
       # Upload a video object to the authenticated account
       #
       # @param [File] video A File that contains a valid video format
-      def upload_video video, name: nil
+      def upload_video video, name: nil, description: nil
         @video = video
-        @ticket = create_video(name: name)
+        @ticket = create_video(name: name, description: description)
         start_upload
         @ticket
       end
@@ -33,7 +33,7 @@ module VimeoMe2
         end
 
         # 3.4 Update
-        def create_video(name: nil)
+        def create_video(name: nil, description: nil)
           body = {
             name: name || get_file_name,
             upload: {
@@ -41,6 +41,7 @@ module VimeoMe2
               size: @video.size.to_s
             }
           }
+          body[:description] = description if description
           post '/videos', body: body, code: 200
         end
 
